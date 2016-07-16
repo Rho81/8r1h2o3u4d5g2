@@ -17,9 +17,11 @@ ProjectRootDir = project.RootFolder;
 % Add Project Folders To Path
 addpath(ProjectRootDir);
 addpath(fullfile(ProjectRootDir,'data'),'-end');
+addpath(fullfile(ProjectRootDir,'data/Simulation_Results'),'-end');
 addpath(fullfile(ProjectRootDir,'documents'),'-end');
 addpath(fullfile(ProjectRootDir,'libraries'),'-end');
 addpath(fullfile(ProjectRootDir,'models'),'-end');
+addpath(fullfile(ProjectRootDir,'models/Coded_Model'),'-end');
 addpath(fullfile(ProjectRootDir,'work'),'-end');
 
 % Set the location of slprj to be the "work" folder of the current project:

@@ -1,4 +1,7 @@
-function [DSubC] = spectrum_sensing_agnt(CARRIER_NUM, DeactivatedSubPercent, METHOD)
+function [DSubC] = spectrum_sensing_agnt(   proposed_inactive_pilot_spaces, ...
+                                            CARRIER_NUM, ...
+                                            DeactivatedSubPercent, ...
+                                            METHOD)
 % -------------------------------------------------------------------------
 % Author: Rodrigo Calderon Rico
 %         Phd. Candidate,
@@ -12,6 +15,7 @@ function [DSubC] = spectrum_sensing_agnt(CARRIER_NUM, DeactivatedSubPercent, MET
 % -------------------------------------------------------------------------
 % Initializate:
 N_DeactivatedSubCarriers   = floor (CARRIER_NUM * DeactivatedSubPercent);
+Selected_Items             = zeros(1,N_DeactivatedSubCarriers);
 
 switch METHOD
     case 'PILOT_DESIGN_METHOD'
@@ -31,8 +35,134 @@ switch METHOD
         end
 
         DSubC = sort(Selected_Items);
+    
+    case 'CHAOTIC_PILOT_DESIGN_METHOD'
+        
+        if (N_DeactivatedSubCarriers > 0)
+            
+            PilotPositionsSet = 1:CARRIER_NUM;
+            
+            for i = 1:N_DeactivatedSubCarriers
+               random_items         = randperm(CARRIER_NUM - (i - 1));
+               Selected_Items(i)    = PilotPositionsSet(random_items(1));
+               PilotPositionsSet(random_items(1)) = [] ;   % Remove Selected Item from Set
+            end
+
+        else
+            Selected_Items  = [];
+        end
+
+        DSubC = sort(Selected_Items);
+
+    case 'FULL_WAVELET_PILOT_DESIGN_METHOD'
+        
+        if (N_DeactivatedSubCarriers > 0)
+            
+            PilotPositionsSet = 1:CARRIER_NUM;
+            
+            for i = 1:N_DeactivatedSubCarriers
+               random_items         = randperm(CARRIER_NUM - (i - 1));
+               Selected_Items(i)    = PilotPositionsSet(random_items(1));
+               PilotPositionsSet(random_items(1)) = [] ;   % Remove Selected Item from Set
+            end
+
+        else
+            Selected_Items  = [];
+        end
+
+        DSubC = sort(Selected_Items);        
+        
+     case 'WAVELET_ENERGY_BASED'
+        
+        if (N_DeactivatedSubCarriers > 0)
+            
+            PilotPositionsSet = 1:CARRIER_NUM;
+            
+            for i = 1:N_DeactivatedSubCarriers
+               random_items         = randperm(CARRIER_NUM - (i - 1));
+               Selected_Items(i)    = PilotPositionsSet(random_items(1));
+               PilotPositionsSet(random_items(1)) = [] ;   % Remove Selected Item from Set
+            end
+
+        else
+            Selected_Items  = [];
+        end
+
+        DSubC = sort(Selected_Items);
+        
+     case 'USE_FEEDBACK_CHANNEL_ESTIMATION'
+        
+        if (N_DeactivatedSubCarriers > 0)
+            
+            PilotPositionsSet = 1:CARRIER_NUM;
+            PilotPositionsSet = PilotPositionsSet(proposed_inactive_pilot_spaces);
+            
+            for i = 1:N_DeactivatedSubCarriers
+               random_items         = randperm(length(PilotPositionsSet));
+               Selected_Items(i)    = PilotPositionsSet(random_items(1));
+               PilotPositionsSet(random_items(1)) = [] ;   % Remove Selected Item from Set
+            end
+
+        else
+            Selected_Items  = [];
+        end
+
+        DSubC = sort(Selected_Items);
 
     case 'SYMETRIC_PILOT_PLACEMENT'
+        if (N_DeactivatedSubCarriers > 0)
+            
+            PilotPositionsSet = 1:CARRIER_NUM;
+            
+            for i = 1:N_DeactivatedSubCarriers
+               random_items         = randperm(CARRIER_NUM - (i - 1));
+               Selected_Items(i)    = PilotPositionsSet(random_items(1));
+               PilotPositionsSet(random_items(1)) = [] ;   % Remove Selected Item from Set
+            end
+
+        else
+            Selected_Items  = [];
+        end
+
+        DSubC = sort(Selected_Items);
+        
+    case 'ASSOCIATIVE_PILOT_ASSIGMENT_WITH_FEEDBACK_CHANNEL_INFORMATION'
+        
+        if (N_DeactivatedSubCarriers > 0)
+            
+            PilotPositionsSet = 1:CARRIER_NUM;
+            
+            for i = 1:N_DeactivatedSubCarriers
+               random_items         = randperm(CARRIER_NUM - (i - 1));
+               Selected_Items(i)    = PilotPositionsSet(random_items(1));
+               PilotPositionsSet(random_items(1)) = [] ;   % Remove Selected Item from Set
+            end
+
+        else
+            Selected_Items  = [];
+        end
+
+        DSubC = sort(Selected_Items);
+        
+    case 'SYMETRIC_PILOTS_SET_AND_INFLUENCE_OF_HIGHEST_CH_VARIATIONS'
+        
+        if (N_DeactivatedSubCarriers > 0)
+            
+            PilotPositionsSet = 1:CARRIER_NUM;
+            
+            for i = 1:N_DeactivatedSubCarriers
+               random_items         = randperm(CARRIER_NUM - (i - 1));
+               Selected_Items(i)    = PilotPositionsSet(random_items(1));
+               PilotPositionsSet(random_items(1)) = [] ;   % Remove Selected Item from Set
+            end
+
+        else
+            Selected_Items  = [];
+        end
+
+        DSubC = sort(Selected_Items);
+        
+    case 'PILOTS_ONLY_ON_THE_HIGHEST_CH_VARIATIONS'
         if (N_DeactivatedSubCarriers > 0)
             
             PilotPositionsSet = 1:CARRIER_NUM;

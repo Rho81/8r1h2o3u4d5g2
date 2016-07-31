@@ -1,3 +1,7 @@
+% -- * -- * -- * -- * -- * -- * -- * -- * -- * -- * -- * -- * -- * -- *
+% Rho Corporation @ 2016 - PhD Communications
+% -- * -- * -- * -- * -- * -- * -- * -- * -- * -- * -- * -- * -- * -- *
+
 function ta = acf(y,p)
 % ACF - Compute Autocorrelations Through p Lags
 % >> myacf = acf(y,p) 

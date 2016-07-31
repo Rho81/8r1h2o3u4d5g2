@@ -1,6 +1,10 @@
 % -- * -- * -- * -- * -- * -- * -- * -- * -- * -- * -- * -- * -- * -- *
 % Rho Corporation @ 2016 - PhD Communications
 % -- * -- * -- * -- * -- * -- * -- * -- * -- * -- * -- * -- * -- * -- *
+% 
+% Script to setup the project and set the current paths to find all 
+% allocated functions to be used.
+%
 
 % Clean Workspace From Previous Open Projects
 bdclose all

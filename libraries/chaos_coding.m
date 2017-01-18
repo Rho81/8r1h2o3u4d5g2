@@ -8,7 +8,7 @@ function  [ encoded_data,  ...
                                                   display_on)
 % Description:
 % 
-%  chaos_coding encodes complex data based on the following equation:
+%  chaos_coding encodes complex IQ data based on the following sequences:
 %  Chaotic Equation Setup:  
 %      x_(n+1) = f(x_n) = 1 - mu * (x_n)^2 , mu ? [1.40015,2], x ? (-1,1)
 %
@@ -42,28 +42,26 @@ IQ_Lenght = length(IQ_sequence);
 switch Mod_Symbol_Map
     case 'QPSK'
         N_Chaotic_Sequences = 2;
-        Symbol_Map          = [ sqrt(0.5), (-1) * sqrt(0.5) ];
     otherwise
         % QPSK Modulation
         N_Chaotic_Sequences = 2;
-        Symbol_Map          = [ sqrt(0.5), (-1) * sqrt(0.5) ];
 end
 
 % Initial Value:
- x_o = rand(1, N_Chaotic_Sequences); % This produces correlated sequences
+x_o = rand(1, N_Chaotic_Sequences);
 %x_o = [ 0.655007, 0.655008 ];
 
 % Chaotic Sequences Initial Conditions:
-for i = 1:N_Chaotic_Sequences
+parfor i = 1:N_Chaotic_Sequences
     Chaos_Sequence{i} = zeros(1,N);
 end
 
 % Iterative Process to generate Chaotic Sequences:
-for i = 1:N_Chaotic_Sequences
+parfor i = 1:N_Chaotic_Sequences
     Chaos_Seq    = Chaos_Sequence{i};
     Chaos_Seq(1) = x_o(i);
     for j=1:N-1
-       Chaos_Seq(j+1) = unit_constant - (mu *  Chaos_Seq(j)^2);
+       Chaos_Seq(j+1) = (unit_constant - (mu *  Chaos_Seq(j)^2));
     end
     Chaos_Sequence{i} = Chaos_Seq;
 end
@@ -71,31 +69,23 @@ end
 % Encoding Process:
 Chaos_Seq_Real   = zeros(1,N);
 Chaos_Seq_Img    = zeros(1,N);
-Partial_Encoding = zeros(IQ_Lenght,N);
+Partial_Encoding = zeros(1,N);
 for i=1:IQ_Lenght
     switch Mod_Symbol_Map
         case 'QPSK'
             % Real Part (I)
-            if (real(IQ_sequence(i)) == Symbol_Map(1) )
-                Chaos_Seq_Real = Chaos_Sequence{1};
-            else
-                Chaos_Seq_Real = Chaos_Sequence{2};
-            end
+            Chaos_Seq_Real = ((real(IQ_sequence(i))) + (Chaos_Sequence{1}(i)));
             % Imaginary Part (Q)
-            if (imag(IQ_sequence(i)) == Symbol_Map(1) )
-                Chaos_Seq_Img = sqrt(-1) * Chaos_Sequence{1}; % Complex Value
-            else
-                Chaos_Seq_Img = sqrt(-1) * Chaos_Sequence{2}; % Complex Value
-            end
+            Chaos_Seq_Img  = sqrt(-1) * (((imag(IQ_sequence(i))) + (Chaos_Sequence{2}(i)))); % Complex Value
     end
-    Partial_Encoding(i,:) = Chaos_Seq_Real + Chaos_Seq_Img;
+    Partial_Encoding(i) = Chaos_Seq_Real + Chaos_Seq_Img;
 end
 
 % Assignments:
 encoded_data = Partial_Encoding;
 
 if(display_on == 1)
-    for i=1:N_Chaotic_Sequences
+    parfor i=1:N_Chaotic_Sequences
         % Auto-Correlation Calculations:
         acf_funct   = autocorr(Chaos_Sequence{i},N-1);
 
@@ -121,6 +111,8 @@ if(display_on == 1)
     end
     figure(3000);
     crosscorr(Chaos_Sequence{1},Chaos_Sequence{2},N-1);
+    figure(4000);
+    crosscorr(real(Partial_Encoding), Chaos_Sequence{1}, N-1);
 end
 
 end

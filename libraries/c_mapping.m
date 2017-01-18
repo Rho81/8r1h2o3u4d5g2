@@ -59,7 +59,7 @@ for i=1:N
 end
 
 if (n_errors > 0 )
-    display('Errors were found...')
+    display('Errors were found... %s',num2str(n_errors))
 else
     display('Successful Coding! :-) No Errors Were Found...')
 end

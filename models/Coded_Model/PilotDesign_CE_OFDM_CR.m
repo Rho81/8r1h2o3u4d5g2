@@ -37,7 +37,7 @@
 %  Clean Workspace:
 % -------------------------------------------------------------------------
 close all;
-clear
+clear;
 clc
 
 % -------------------------------------------------------------------------
@@ -49,12 +49,12 @@ rng('shuffle', 'twister')
 % =========================================================================
 % Parameters Definitions:
 % =========================================================================
-SNRdB     = 1:2:30;
+SNRdB     = 0:2:10;
 SNR       = 10.^(SNRdB/10);
 BER       = zeros(1,length(SNRdB));
 bits      = zeros(1,length(SNRdB));
 Good_Bits = zeros(1,length(SNRdB));
-N_FRAMES  = 50;
+N_FRAMES  = 100;
 
 % -------------------------------------------------------------------------
 % OFDM Parameters:
@@ -89,7 +89,7 @@ CH_EST_TYPE    = 'LS';   % Channel Estimation Methods:
 if ( strcmp(CH_EST_TYPE, 'PERFECT_CSI') || strcmp(CHANNEL_TYPE, 'AWGN'))                        
     PILOT_NUM   = 0;       % No need of Pilots
 else
-    PILOT_NUM          = 4;           % Number of Pilots 
+    PILOT_NUM          = 16;          % Number of Pilots 
     NUMBER_OF_PILOTS   = PILOT_NUM;   % Number of Pilots
     FORCE_PILOT_NUM    = 0;           % PILOT_NUM is forced to be true
 end
@@ -109,6 +109,7 @@ PILOT_REF   = (1+1i)*sqrt(0.5); % For Channel Est. QPSK Symbols
         %   I)  'PERFECT_CSI_KNOWLEDGE'
         %   J)  'WAVELET_ENERGY_BASED'
         %   k)  'CHAOTIC_PILOT_DESIGN_METHOD'
+        %   L)  'FORD_CIRCLES'
 
 % PILOT_DESIGN_METHOD = {'USE_FEEDBACK_CHANNEL_ESTIMATION', ...
 %                        'PILOT_DESIGN_METHOD', ...
@@ -117,10 +118,9 @@ PILOT_REF   = (1+1i)*sqrt(0.5); % For Channel Est. QPSK Symbols
 %                        'SYMETRIC_PILOTS_SET_AND_INFLUENCE_OF_HIGHEST_CH_VARIATIONS'};
 
  
-% PILOT_DESIGN_METHOD = { 'FULL_WAVELET_PILOT_DESIGN_METHOD',  ...
-%                         'CHAOTIC_PILOT_DESIGN_METHOD'};                  
+PILOT_DESIGN_METHOD = {'PILOT_DESIGN_METHOD', 'CHAOTIC_PILOT_DESIGN_METHOD'};                  
 
-PILOT_DESIGN_METHOD = { 'CHAOTIC_PILOT_DESIGN_METHOD'}; 
+%PILOT_DESIGN_METHOD = { 'CHAOTIC_PILOT_DESIGN_METHOD'}; 
 
 % -------------------------------------------------------------------------
 % MIMO Channel Parameters:  (FUTURE USE)
@@ -131,7 +131,7 @@ N_T = 1;
 % -------------------------------------------------------------------------
 %  Cognitive Radio Parameters:
 % -------------------------------------------------------------------------
-MY_N_DEACTIVATED_SUBCARRIERS = 0.25;
+MY_N_DEACTIVATED_SUBCARRIERS = 0.55;
 
 % -------------------------------------------------------------------------
 % Estimated Channel Analysis Wavelet Parameters
@@ -245,8 +245,8 @@ for snr_index = 1:length(SNR);
         
         if ( strcmp(PILOT_DESIGN_MODE,'CHAOTIC_PILOT_DESIGN_METHOD') )
             % Since this parameter is used to generate data and due to the 
-            % duality of the inforamtion being sent we need:
-            %   N = PILOT_NUM  &  N = Generated Data
+            % duality of the information being sent we need:
+            %   N = PILOT_NUM = 0 ; therefore, N = Generated Data
             PILOT_NUM = 0;
         else
             PILOT_NUM = length(PILOT_POSITION); %Re-definition due to optimization!!!
@@ -276,7 +276,7 @@ for snr_index = 1:length(SNR);
         else 
             CARRIER_i_data                 = 1:CARRIER_NUM;
             if (strcmp(PILOT_DESIGN_MODE,'CHAOTIC_PILOT_DESIGN_METHOD'))
-                CARRIER_i_data(DSubCarriers) = [];
+                CARRIER_i_data(DSubCarriers) = [];  % No Dedicated Subcarriers for Pilots!
             else
                 CARRIER_i_data([PILOT_POSITION, DSubCarriers]) = [];
             end
@@ -293,12 +293,12 @@ for snr_index = 1:length(SNR);
             
             % Encoding Process:
             [ coded_data,       ...
-              chaotic_sequence, ...
-              Chaos_Seq_Real,   ... 
-              Chaos_Seq_Img         ] = chaos_coding(x_mod, 0 );
+              chaotic_sequence     ] = chaos_coding( x_mod,  ...
+                                                     256,    ...
+                                                     'QPSK', ...
+                                                     0 );
             
             x_mod = reshape(coded_data, length(coded_data), 1);
-            x_mod = x_mod + x_mod;
         end
         
         % -----------------------------------------------------------------
@@ -335,7 +335,7 @@ for snr_index = 1:length(SNR);
         % -----------------------------------------------------------------
         % IFFT
         % -----------------------------------------------------------------
-        ifft_sig = ifft(x_mod);
+        ifft_sig = ifft(x_data_pilot);
         
         % -----------------------------------------------------------------
         % Adding Cyclic Extension
@@ -362,7 +362,7 @@ for snr_index = 1:length(SNR);
         switch CHANNEL_TYPE
             case 'FIR_EXP'
                 % Generate channel matrix (Exponential Fading):
-                for i = 1:FIR_TAPS
+                parfor i = 1:FIR_TAPS
                     H(i) = (randn(N_R,N_T) + sqrt(-1)*randn(N_R,N_T)) * exp((-0.2)*(i));                   
                 end
                 
@@ -422,7 +422,7 @@ for snr_index = 1:length(SNR);
             % -------------------------------------------------------------
             % Equalization:
             % -------------------------------------------------------------
-            for kk = 1:CARRIER_NUM
+            parfor kk = 1:CARRIER_NUM
                 % Equalization Per-SubCarrier:
                 y_hat(kk,:) = ff_sig(kk,:)./H_est(kk);
             end
@@ -438,12 +438,11 @@ for snr_index = 1:length(SNR);
     
             if ( strcmp(PILOT_DESIGN_MODE,'CHAOTIC_PILOT_DESIGN_METHOD') )
                 % Decoding Process:
-                [ ff_sig ] = chaos_decoding(ff_sig, chaotic_sequence);
-                [ est_pilots ] = estimate_pilots_for_chaos_seq( ff_sig,         ...
-                                                                Chaos_Seq_Real, ... 
-                                                                Chaos_Seq_Img,  ...
-                                                                sqrt(0.5)          );
-                PILOT_REF  = -chaotic_sequence(PILOT_POSITION);  % The original sequence used is required.
+                [ decoded_data_x ] = chaos_decoding(ff_sig, 256, chaotic_sequence,'QPSK');
+
+                PILOT_REF  = (real(decoded_data_x) + chaotic_sequence{1}) +  (imag(decoded_data_x) + ((sqrt(-1) * chaotic_sequence{2})));
+                PILOT_REF  = PILOT_REF(PILOT_POSITION);  % The original sequence used is required.
+                PILOT_REF  = reshape(PILOT_REF, length(PILOT_REF), 1);
             end
                 
             [ H_est ] = channel_est_rx( H_Pilot,         ...
@@ -453,11 +452,16 @@ for snr_index = 1:length(SNR);
                                         PILOT_POSITION,  ...
                                         PILOT_REF,       ...
                                         CARRIER_NUM           );
-            
+            % Change Channel Interpolation mode for the chaos option, high variations on the
+            % y-axis from neighbor symbols should be discarded as bad
+            % Pilots, look for the less variance metric!
+            if ( strcmp(PILOT_DESIGN_MODE,'CHAOTIC_PILOT_DESIGN_METHOD') )
+                [ H_est ] = estimate_pilots_for_chaos_seq( H_est, CARRIER_NUM );
+            end
             % -------------------------------------------------------------
             % Equalization:
             % -------------------------------------------------------------
-            for kk = 1:CARRIER_NUM
+            parfor kk = 1:CARRIER_NUM
                 y_hat(kk,:) = ff_sig(kk,:)./H_est(kk);
             end
              
@@ -467,6 +471,7 @@ for snr_index = 1:length(SNR);
         % Demodulation:
         % -----------------------------------------------------------------
         if ( strcmp(PILOT_DESIGN_MODE,'CHAOTIC_PILOT_DESIGN_METHOD') )
+%             y_hat = (real(y_hat) - reshape(chaotic_sequence{1}, length(chaotic_sequence{1}), 1)) + (sqrt(-1) * (imag(y_hat) - reshape(chaotic_sequence{2}, length(chaotic_sequence{2}), 1)));
             y_hat(DSubCarriers) = [];
         else
             y_hat([DSubCarriers PILOT_POSITION]) = [];
@@ -491,7 +496,7 @@ for snr_index = 1:length(SNR);
         % Remove from x the pilot positions:
 
         bit_diff = zeros(1,length(x));
-        for bit_index = 1:length(x)
+        parfor bit_index = 1:length(x)
             if ( x(bit_index) ~= dem_data_s(bit_index) )
                 bit_diff(bit_index) = 1;
             else
@@ -532,7 +537,7 @@ figure(10)
 plot(SNRdB,troughput,graphic_line_patterns(pilot_designMode_indx), 'linewidth' , 1.0);
 legend(PILOT_DESIGN_METHOD);
 title('System Throughput Comparison');
-ylabel('\etha');
+ylabel('\eta');
 xlabel('SNR(dB)');
 grid on
 hold on

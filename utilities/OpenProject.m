@@ -42,13 +42,5 @@ Simulink.fileGenControl('set', ...
                         fullfile(ProjectRootDir,'work') ...
                         );
 
-% Set Project Configurations
-% SDR_init();
-% BST_Start;
-% boardP = matlabshared.internal.BoardParameters('sdrz');
-% setParam(boardP,'SDRZARMTargeting',true)
-% Program_FPGA;
-% Set_BST_Test_Parameters
-
 % Change working folder to the "work" folder:
-cd(myCacheFolder);
+% cd(myCacheFolder);

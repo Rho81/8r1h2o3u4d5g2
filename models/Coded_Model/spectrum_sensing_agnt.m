@@ -18,6 +18,9 @@ N_DeactivatedSubCarriers   = floor (CARRIER_NUM * DeactivatedSubPercent);
 Selected_Items             = zeros(1,N_DeactivatedSubCarriers);
 
 switch METHOD
+    case 'PERFECT_CSI_KNOWLEDGE'
+        DSubC = [];
+        
     case 'PILOT_DESIGN_METHOD'
         
         if (N_DeactivatedSubCarriers > 0)
@@ -37,6 +40,24 @@ switch METHOD
         DSubC = sort(Selected_Items);
     
     case 'CHAOTIC_PILOT_DESIGN_METHOD'
+        
+        if (N_DeactivatedSubCarriers > 0)
+            
+            PilotPositionsSet = 1:CARRIER_NUM;
+            
+            for i = 1:N_DeactivatedSubCarriers
+               random_items         = randperm(CARRIER_NUM - (i - 1));
+               Selected_Items(i)    = PilotPositionsSet(random_items(1));
+               PilotPositionsSet(random_items(1)) = [] ;   % Remove Selected Item from Set
+            end
+
+        else
+            Selected_Items  = [];
+        end
+
+        DSubC = sort(Selected_Items);
+    
+    case 'FORD_CIRCLES'
         
         if (N_DeactivatedSubCarriers > 0)
             

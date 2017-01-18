@@ -168,8 +168,54 @@ selected_indx = zeros(1, PILOT_NUM);
         PROB_PILOT_VEC(DEACTIVATED_SUB_CARRIERS) = [];
         
         % In this method all remainning subcarriers will have a duality,
-        % namely they will be pilots and data combined!.
+        % namely they will be pilots and data combined!
         PILOT_VECTOR = PROB_PILOT_VEC;
+     
+     case 'FORD_CIRCLES'
+         
+        % Discard the randomly deactivated Sub-Carriers to hold a Pilot tone:
+        PROB_PILOT_VEC(DEACTIVATED_SUB_CARRIERS) = [];
+        
+        % Step 2: Initialize set P = { p_zero, p_one}. Set n = 2:
+        a(1)   = PROB_PILOT_VEC(1);
+        ford_circle_factor = 1;
+        
+        %Forward Circles
+        for u=2:(PILOT_NUM/2)
+            
+            if( selected_indx(u-1) <= length(PROB_PILOT_VEC))
+                % Next position
+                next_index         = 2*(ford_circle_factor)^2 + selected_indx(u-1);
+                selected_indx(u)   = next_index;
+                ford_circle_factor = ford_circle_factor + 1;
+            else
+                selected_indx(u)   = length(PROB_PILOT_VEC);
+                break;
+            end
+            
+        end
+        
+        %Backward Circles
+        ford_circle_factor = 1;
+        for u=((PILOT_NUM/2))+1:PILOT_NUM
+            
+            if( selected_indx(u-1) <= length(PROB_PILOT_VEC))
+                % Next position
+                next_index         = selected_indx(u-1) - 2*(ford_circle_factor)^2;
+                selected_indx(u)   = next_index;
+                ford_circle_factor = ford_circle_factor + 1;
+            end
+            
+            if(selected_indx(u) <= 1)
+                selected_indx(u) = 1;
+                break;
+            end
+            
+        end
+        
+        % In this method all remainning subcarriers will have a duality,
+        % namely they will be pilots and data combined!
+        PILOT_VECTOR = sort(PROB_PILOT_VEC(selected_indx));
         
      case 'ASSOCIATIVE_PILOT_ASSIGMENT_WITH_FEEDBACK_CHANNEL_INFORMATION'
         
